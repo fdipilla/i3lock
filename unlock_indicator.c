@@ -22,8 +22,8 @@
 #include "randr.h"
 
 #define BUTTON_RADIUS 90
-#define BUTTON_SPACE (BUTTON_RADIUS + 5)
-#define BUTTON_CENTER (BUTTON_RADIUS + 5)
+#define BUTTON_SPACE (BUTTON_RADIUS + 90)
+#define BUTTON_CENTER (BUTTON_RADIUS + 90)
 #define BUTTON_DIAMETER (2 * BUTTON_SPACE)
 
 /*******************************************************************************
@@ -144,13 +144,6 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         (unlock_state >= STATE_KEY_PRESSED || auth_state > STATE_AUTH_IDLE)) {
         cairo_scale(ctx, scaling_factor(), scaling_factor());
         /* Draw a (centered) circle with transparent background. */
-        cairo_set_line_width(ctx, 10.0);
-        cairo_arc(ctx,
-                  BUTTON_CENTER /* x */,
-                  BUTTON_CENTER /* y */,
-                  BUTTON_RADIUS /* radius */,
-                  0 /* start */,
-                  2 * M_PI /* end */);
 
         /* Use the appropriate color for the different PAM states
          * (currently verifying, wrong password, or default) */
@@ -278,39 +271,43 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         if (unlock_state == STATE_KEY_ACTIVE ||
             unlock_state == STATE_BACKSPACE_ACTIVE) {
             cairo_new_sub_path(ctx);
-            double highlight_start = (rand() % (int)(2 * M_PI * 100)) / 100.0;
-            cairo_arc(ctx,
-                      BUTTON_CENTER /* x */,
-                      BUTTON_CENTER /* y */,
-                      BUTTON_RADIUS /* radius */,
-                      highlight_start,
-                      highlight_start + (M_PI / 3.0));
-            if (unlock_state == STATE_KEY_ACTIVE) {
-                /* For normal keys, we use a lighter green. */
-                cairo_set_source_rgb(ctx, 51.0 / 255, 219.0 / 255, 0);
-            } else {
-                /* For backspace, we use red. */
-                cairo_set_source_rgb(ctx, 219.0 / 255, 51.0 / 255, 0);
-            }
-            cairo_stroke(ctx);
+            double highlight_start = 0;
 
-            /* Draw two little separators for the highlighted part of the
-             * unlock indicator. */
-            cairo_set_source_rgb(ctx, 0, 0, 0);
-            cairo_arc(ctx,
-                      BUTTON_CENTER /* x */,
-                      BUTTON_CENTER /* y */,
-                      BUTTON_RADIUS /* radius */,
-                      highlight_start /* start */,
-                      highlight_start + (M_PI / 128.0) /* end */);
-            cairo_stroke(ctx);
-            cairo_arc(ctx,
-                      BUTTON_CENTER /* x */,
-                      BUTTON_CENTER /* y */,
-                      BUTTON_RADIUS /* radius */,
-                      (highlight_start + (M_PI / 3.0)) - (M_PI / 128.0) /* start */,
-                      highlight_start + (M_PI / 3.0) /* end */);
-            cairo_stroke(ctx);
+            int circle_counter;
+
+            double circle_colors[9][3] = {
+                {109.0 / 255, 152.0 / 255, 219.0 / 255},
+                {79.0 / 255, 116.0 / 255, 175.0 / 255},
+                {79.0 / 255, 116.0 / 255, 175.0 / 255},
+                {75.0 / 255, 109.0 / 255, 163.0 / 255},
+                {96.0 / 255, 131.0 / 255, 188.0 / 255},
+                {58.0 / 255, 88.0 / 255, 135.0 / 255},
+                {48.0 / 255, 68.0 / 255, 99.0 / 255},
+                {29.0 / 255, 44.0 / 255, 99.0 / 255},
+                {17.0 / 255, 29.0 / 255, 45.0 / 255}
+            };
+
+            for (circle_counter = 0; circle_counter < 9; circle_counter++) {
+
+                highlight_start = (rand() % (int)(2 * M_PI * 100)) / 100.0;
+
+                cairo_arc(ctx,
+                          BUTTON_CENTER /* x */,
+                          BUTTON_CENTER /* y */,
+                          BUTTON_RADIUS + (10 * circle_counter) /* radius */,
+                          highlight_start,
+                          highlight_start + (M_PI / 3.0));
+                if (unlock_state == STATE_KEY_ACTIVE) {
+                    cairo_set_source_rgb(ctx, circle_colors[circle_counter][0],
+                                         circle_colors[circle_counter][1],
+                                         circle_colors[circle_counter][2]);
+                } else {
+                    /* For backspace, we use red. */
+                    cairo_set_source_rgb(ctx, 219.0 / 255, 51.0 / 255, 0);
+                }
+                cairo_stroke(ctx);
+            }
+
         }
     }
 
